@@ -39,6 +39,10 @@ Convert a PNG image to SVG art with a dot size of 15, and open the resulting fil
 ndotter --source image.png --dot-size 15 --open
 ```
 
+![before](assets/screen1.png)
+
+![after](assets/screen2.png)
+
 ## Contributing
 
 Feel free to submit issues or pull requests if you'd like to improve ndotter!
