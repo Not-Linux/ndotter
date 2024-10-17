@@ -3,7 +3,7 @@ name = "ndotter"
 version = "1.0.0"
 authors = ["Koncepto Sociala"]
 description = "Convert bitmaps to N-dot SVG art"
-documentation = "docs.rs/ndotter"
+documentation = "https://docs.rs/ndotter"
 license = "MIT"
 edition = "2021"
 
