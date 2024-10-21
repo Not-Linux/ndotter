@@ -1,0 +1,16 @@
+[package]
+name = "ndotter_gui"
+version = "2.0.0"
+authors = ["Koncepto Sociala"]
+description = "GUI frontend for ndotter"
+license = "MIT"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.89"
+ndotter_backend = { path = "../backend"}
+gtk = "0.16.1"
+relm = "0.24.1"
+relm-derive = "0.24.0"
+structstruck = "0.4.1"
+urlencoding = "2.1.3"
