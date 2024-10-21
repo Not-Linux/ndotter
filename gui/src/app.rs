@@ -1,27 +1,41 @@
 use std::path::PathBuf;
-
+use std::fs::read_to_string;
 use gtk::prelude::*;
 use gtk::*;
 use ndotter_backend::ndot;
 use relm::Widget;
 use relm_derive::widget;
+use toml::Value;
 
-use crate::utils::traits::*;
+use crate::utils::{traits::*, FontType};
 use crate::utils::{Config, Model, Msg, SelectFile, Size};
-use crate::widgets::notheader::NotHeader;
-use crate::widgets::labelled_spin_button::{
-    LabelledSpinButton,
-    LabelledSpinButtonMsg::*,
-};
-use crate::widgets::labelled_switch::{
-    LabelledSwitch,
-    LabelledSwitchMsg::*,
+use crate::widgets::notheading::NotHeading;
+use crate::widgets::{
+    notheader::NotHeader,
+    file_select::{FileSelect, FileSelectMsg::*},
+    labelled_spin_button::{LabelledSpinButton, LabelledSpinButtonMsg::*},
+    labelled_switch::{LabelledSwitch, LabelledSwitchMsg::*},
 };
 
 #[widget]
 impl Widget for App {
     fn model() -> Model {
-        Model::default()
+        let mut model = Model::default();
+        
+        if let Ok(toml) = read_to_string(format!("{}/.config/not-linux/personalization.toml", env!("HOME"))) {
+            if let Ok(main_table) = toml.parse::<toml::Table>() {
+                if let Some(personalization) = main_table.get("personalization") {
+                    model.font_type = match personalization.get("font_type") {
+                        Some(Value::String(s)) if s.as_str() == "Serif" => FontType::Serif,
+                        _ => FontType::Dot,
+                    };
+                }
+            }
+        }
+
+        dbg!(&model.font_type);
+
+        model
     }
 
     fn update(&mut self, event: Msg) {
@@ -61,6 +75,7 @@ impl Widget for App {
                             let path = self.open_dialog(FileChooserAction::Open, &[filter]);
 
                             if path.is_some() {
+                                self.streams.src_chooser.emit(SetPath(path.clone()));
                                 self.model.source = path;
                             }
                         },
@@ -75,6 +90,7 @@ impl Widget for App {
                                 });
 
                             if path.is_some() {
+                                self.streams.dst_chooser.emit(SetPath(path.clone()));
                                 self.model.destination = path;
                             }
                         },
@@ -101,73 +117,28 @@ impl Widget for App {
                 halign: Align::Center,
                 margin: 20,
 
-                gtk::Label {
-                    text: "CONVERT IMAGE TO N-DOT",
-                    font_family: "Nothing Font (5x7)",
-                    font_size: 24,
-                    margin_bottom: 10,
+                NotHeading("Convert image to N-Dot", self.model.font_type) {},
+
+                #[name = "src_chooser"]
+                FileSelect("Select source file") {
+                    InvokeDialog => Msg::Config(
+                        Config::SelectFile(
+                            SelectFile::Source
+                        ),
+                    ),
                 },
 
-                gtk::Box {
-                    orientation: Orientation::Horizontal,
-                    margin_bottom: 10,
-
-                    gtk::Entry {
-                        text: &self.model.source
-                            .clone()
-                            .map(|p| p.as_path().to_str().unwrap().to_owned())
-                            .unwrap_or_default(),
-                        placeholder_text: Some("Select source file"),
-                        sensitive: false,
-                        margin_end: 5,
-                        child: {
-                            expand: true,
-                            fill: true,
-                        },
-                    },
-
-                    gtk::Button {
-                        label: "Select",
-    
-                        clicked => Msg::Config(
-                            Config::SelectFile(
-                                SelectFile::Source
-                            ),
+                #[name = "dst_chooser"]
+                FileSelect("Select destination file") {
+                    InvokeDialog => Msg::Config(
+                        Config::SelectFile(
+                            SelectFile::Destination
                         ),
-                    },
-                },
-
-                gtk::Box {
-                    orientation: Orientation::Horizontal,
-                    margin_bottom: 10,
-
-                    gtk::Entry {
-                        text: &self.model.destination
-                            .clone()
-                            .map(|p| p.as_path().to_str().unwrap().to_owned())
-                            .unwrap_or_default(),
-                        placeholder_text: Some("Select destination file"),
-                        sensitive: false,
-                        margin_end: 5,
-                        child: {
-                            expand: true,
-                            fill: true,
-                        },
-                    },
-
-                    gtk::Button {
-                        label: "Select",
-    
-                        clicked => Msg::Config(
-                            Config::SelectFile(
-                                SelectFile::Destination
-                            ),
-                        ),
-                    },
+                    ),
                 },
 
                 LabelledSpinButton("Dot size") {
-                    tooltip_text: Some("Use black pixels for processing instead of white"),
+                    tooltip_text: Some("Size of each N-dot (minimal is 1)"),
 
                     ValueSet(value) => Msg::Config(
                         Config::ChangeDotSize(value)

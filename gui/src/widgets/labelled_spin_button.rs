@@ -50,8 +50,8 @@ impl Widget for LabelledSpinButton {
                     .upper(50.0)
                     .step_increment(1.0)
                     .page_increment(5.0)
+                    .value(self.model.value as f64)
                     .build(),
-                value: self.model.value as f64,
 
                 changed(button) => LabelledSpinButtonMsg::ValueSet(button.value() as u32),
             },

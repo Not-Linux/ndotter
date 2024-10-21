@@ -8,11 +8,6 @@ use crate::utils::traits::*;
 
 pub struct NotHeaderModel(&'static str);
 
-#[derive(Msg)]
-pub enum NotHeaderMsg {
-    StateSet(bool),
-}
-
 #[widget]
 impl Widget for NotHeader {
     fn model(label: &'static str) -> NotHeaderModel {
@@ -25,7 +20,7 @@ impl Widget for NotHeader {
         gtk::HeaderBar {
             custom_title: view! {
                 gtk::Label {
-                    text: "ndotter",
+                    text: self.model.0,
                     font_family: "NDot",
                     font_size: 18,
                     margin_top: 5,
