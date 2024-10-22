@@ -1,17 +1,18 @@
 use std::path::PathBuf;
-use std::fs::read_to_string;
 use gtk::prelude::*;
 use gtk::*;
-use ndotter_backend::ndot;
 use relm::Widget;
 use relm_derive::widget;
-use toml::Value;
+use notrelm::utils::traits::*;
+use notrelm::widgets::{
+    header::Header,
+    heading::Heading,
+};
+use notrelm::utils::*;
+use ndotter_backend::ndot;
 
-use crate::utils::{traits::*, FontType};
-use crate::utils::{Config, Model, Msg, SelectFile, Size};
-use crate::widgets::notheading::NotHeading;
+use crate::utils::{Config, Model, Msg, SelectFile};
 use crate::widgets::{
-    notheader::NotHeader,
     file_select::{FileSelect, FileSelectMsg::*},
     labelled_spin_button::{LabelledSpinButton, LabelledSpinButtonMsg::*},
     labelled_switch::{LabelledSwitch, LabelledSwitchMsg::*},
@@ -20,22 +21,7 @@ use crate::widgets::{
 #[widget]
 impl Widget for App {
     fn model() -> Model {
-        let mut model = Model::default();
-        
-        if let Ok(toml) = read_to_string(format!("{}/.config/not-linux/personalization.toml", env!("HOME"))) {
-            if let Ok(main_table) = toml.parse::<toml::Table>() {
-                if let Some(personalization) = main_table.get("personalization") {
-                    model.font_type = match personalization.get("font_type") {
-                        Some(Value::String(s)) if s.as_str() == "Serif" => FontType::Serif,
-                        _ => FontType::Dot,
-                    };
-                }
-            }
-        }
-
-        dbg!(&model.font_type);
-
-        model
+        Model::default()
     }
 
     fn update(&mut self, event: Msg) {
@@ -84,10 +70,7 @@ impl Widget for App {
                             filter.add_mime_type("image/svg");
 
                             let path = self.open_dialog(FileChooserAction::Save, &[filter])
-                                .map(|mut p| { 
-                                    p.set_extension("svg"); 
-                                    p 
-                                });
+                                .map(|mut p| { p.set_extension("svg"); p });
 
                             if path.is_some() {
                                 self.streams.dst_chooser.emit(SetPath(path.clone()));
@@ -109,7 +92,7 @@ impl Widget for App {
             resizable: false,
             size: Size { width: 360, height: 270 },
             titlebar: view! { 
-                NotHeader("ndotter") {},
+                Header("ndotter") {},
             },
 
             gtk::Box {
@@ -117,7 +100,7 @@ impl Widget for App {
                 halign: Align::Center,
                 margin: 20,
 
-                NotHeading("Convert image to N-Dot", self.model.font_type) {},
+                Heading("Convert image to N-Dot", self.model.config.clone()) {},
 
                 #[name = "src_chooser"]
                 FileSelect("Select source file") {
